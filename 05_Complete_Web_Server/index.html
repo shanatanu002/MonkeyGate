@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonkeyInt</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+
+        header {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            border-bottom: 2px solid #1e40af;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            max-width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .button-container a button {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .button-container a button:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .output-container {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .run-button {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .run-button:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .CodeMirror {
+            border: 1px solid #e5e7eb;
+            min-height: 150px;
+            background-color: #282a36;
+            color: #f8f8f2;
+            border-radius: 8px;
+        }
+
+        .CodeMirror-gutters {
+            background: #282a36;
+            border-right: 1px solid #44475a;
+        }
+
+        .CodeMirror-cursor {
+            border-left: 1px solid #50fa7b;
+        }
+
+        .CodeMirror-line {
+            color: #f8f8f2;
+        }
+        .CodeMirror-selected {
+            background-color: #44475a ;
+        }
+
+        .CodeMirror:hover {
+            background-color: #3a3c4e;
+        }
+
+        .output-container pre {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        header h1 span {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <header class="p-4 w-full text-center shadow-lg border-b-2 border-[#1e40af]">
+            <h1 class="text-3xl font-bold">Monkey<span>Int</span></h1>
+        </header>
+        <div class="container mx-4 sm:mx-6 md:mx-8 lg:mx-12 p-6 my-8 w-full max-w-full rounded-lg">
+            <form id="repl-form">
+                <textarea id="code-input" name="code" class="w-full p-4 rounded-lg bg-[#282a36] text-[#f8f8f2] border border-[#e5e7eb] resize-none"></textarea>
+                <button type="submit" class="run-button mt-6 w-full py-3 rounded-lg transition-transform duration-300 ease-in-out font-semibold">Run</button>
+            </form>
+
+            <div class="button-container mt-8 flex flex-wrap justify-center space-x-4">
+                <a href="https://github.com/P-S-S-7/Building_an_Interpreter/blob/main/README.md" target="_blank">
+                    <button class="py-2 px-6 rounded-lg transition-colors duration-300 font-semibold">Documentation</button>
+                </a>
+                <a href="https://github.com/P-S-S-7/Building_an_Interpreter" target="_blank">
+                    <button class="py-2 px-6 rounded-lg transition-colors duration-300 font-semibold">Code</button>
+                </a>
+            </div>
+            <div class="output-container mt-8">
+                <h2 class="text-xl font-semibold">Output</h2>
+                <pre id="output" class="mt-4 p-4 rounded-lg"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/formatting.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/selection/active-line.min.js"></script>
+
+    <script>
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
+            mode: "text/x-go",
+            theme: "dracula",
+            lineNumbers: true,
+            tabSize: 4,
+            indentUnit: 4,
+            autoCloseBrackets: true,
+            styleActiveLine: true,
+            extraKeys: {"Ctrl-Space": "autocomplete"}
+        });
+
+        editor.on('change', function() {
+            editor.setSize(null, 'auto');
+        });
+
+        document.getElementById('repl-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const code = editor.getValue();
+            const output = document.getElementById('output');
+
+            output.textContent = "";
+
+            try {
+                const response = await fetch('/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.text();
+                output.textContent = result;
+            } catch (error) {
+                console.error('Error during code execution:', error);
+                output.textContent = "Error connecting to the backend.";
+            }
+        });
+    </script>
+</body>
+</html>
